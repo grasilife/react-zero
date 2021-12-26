@@ -64,7 +64,7 @@ function reconcileChildren(instance, element) {
 function instantiate(element) {
   const { type, props } = element;
   const isDomElement = typeof type === "string";
-
+  console.log(type, "type");
   if (isDomElement) {
     // Instantiate DOM element
     const isTextElement = type === "TEXT ELEMENT";
@@ -133,6 +133,7 @@ function updateDomProperties(dom, prevProps, nextProps) {
 function createPublicInstance(element, internalInstance) {
   const { type, props } = element;
   const publicInstance = new type(props);
+  console.log(publicInstance, "publicInstance");
   publicInstance.__internalInstance = internalInstance;
   return publicInstance;
 }
@@ -142,26 +143,22 @@ function updateInstance(internalInstance) {
   const element = internalInstance.element;
   reconcile(parentDom, internalInstance, element);
 }
-//---------------------------------------------------------漂亮的分割线--------------------------
-function tick() {
-  const time = new Date().toLocaleTimeString();
-  const clockElement = {
-    type: "h1",
-    props: {
-      children: [
-        {
-          type: "TEXT ELEMENT",
-          props: { nodeValue: time },
-        },
-      ],
-    },
-  };
-  render(clockElement, document.getElementById("root"));
+
+const TEXT_ELEMENT = "TEXT ELEMENT";
+
+function createElement(type, config, ...args) {
+  const props = Object.assign({}, config);
+  const hasChildren = args.length > 0;
+  const rawChildren = hasChildren ? [].concat(...args) : [];
+  props.children = rawChildren
+    .filter((c) => c != null && c !== false)
+    .map((c) => (c instanceof Object ? c : createTextElement(c)));
+  return { type, props };
 }
 
-tick();
-setInterval(tick, 1000);
-
+function createTextElement(value) {
+  return createElement(TEXT_ELEMENT, { nodeValue: value });
+}
 class Component {
   constructor(props) {
     this.props = props;
@@ -173,3 +170,74 @@ class Component {
     updateInstance(this.__internalInstance);
   }
 }
+//---------------------------------------------------------漂亮的分割线--------------------------
+const stories = [
+  { name: "Didact introduction", url: "http://bit.ly/2pX7HNn" },
+  { name: "Rendering DOM elements ", url: "http://bit.ly/2qCOejH" },
+  { name: "Element creation and JSX", url: "http://bit.ly/2qGbw8S" },
+  { name: "Instances and reconciliation", url: "http://bit.ly/2q4A746" },
+  { name: "Components and state", url: "http://bit.ly/2rE16nh" },
+  { name: "Fiber: Incremental reconciliation", url: "http://bit.ly/2gaF1sS" },
+];
+class Story extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { likes: Math.ceil(Math.random() * 100) };
+  }
+  like() {
+    this.setState({
+      likes: this.state.likes + 1,
+    });
+  }
+  render() {
+    const { name, url } = this.props;
+    const { likes } = this.state;
+    const likesElement = createElement("span", null);
+    return createElement(
+      "li",
+      null,
+      createElement(
+        "button",
+        { onClick: (e) => this.like() },
+        likes,
+        createElement("b", null, "\u2764\uFE0F")
+      ),
+
+      createElement("a", { href: url }, name)
+    );
+  }
+}
+class App extends Component {
+  constructor(props) {
+    super(props);
+    console.log(props, "props");
+    this.props = props;
+    this.state = this.state || {};
+  }
+
+  setState(partialState) {
+    this.state = Object.assign({}, this.state, partialState);
+    updateInstance(this.__internalInstance);
+  }
+  render() {
+    return createElement(
+      "div",
+      null,
+      createElement("h1", null, "Didact Stories"),
+      createElement(
+        "ul",
+        null,
+        this.props.stories.map((story) => {
+          return createElement(Story, {
+            name: story.name,
+            url: story.url,
+          });
+        })
+      )
+    );
+  }
+}
+render(
+  createElement(App, { stories: stories }),
+  document.getElementById("root")
+);
