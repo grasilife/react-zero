@@ -17,7 +17,7 @@ const reactElement = {
     children: ["Foo"],
   },
 };
-//添加type为patch标记,未来减少diff性能
+//添加type为patch标记,未来减少diff性能,我们将上面的结构更改下面的虚拟dom结构,将文本添加到nodeValue属性中,并增加type属性
 const textElement = {
   type: "span",
   props: {
@@ -31,8 +31,14 @@ const textElement = {
 };
 function render(element, parentDom) {
   const { type, props } = element;
-  const dom = document.createElement(type);
-  //event,处理以on开头的事件
+
+  // Create DOM element
+  const isTextElement = type === "TEXT ELEMENT";
+  const dom = isTextElement
+    ? document.createTextNode("")
+    : document.createElement(type);
+  console.log(dom, props, "dom");
+  // 添加事件
   const isListener = (name) => name.startsWith("on");
   Object.keys(props)
     .filter(isListener)
@@ -40,17 +46,20 @@ function render(element, parentDom) {
       const eventType = name.toLowerCase().substring(2);
       dom.addEventListener(eventType, props[name]);
     });
-  //props
+
+  // 添加props
   const isAttribute = (name) => !isListener(name) && name != "children";
   Object.keys(props)
     .filter(isAttribute)
     .forEach((name) => {
-      console.log(name, "name");
       dom[name] = props[name];
     });
-  //children
+
+  // render children
   const childElements = props.children || [];
   childElements.forEach((childElement) => render(childElement, dom));
+
+  // Append to parent
   parentDom.appendChild(dom);
 }
-render(element, document.getElementById("root"));
+render(textElement, document.getElementById("root"));
