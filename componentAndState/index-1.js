@@ -192,7 +192,6 @@ class Story extends Component {
   render() {
     const { name, url } = this.props;
     const { likes } = this.state;
-    const likesElement = createElement("span", null);
     return createElement(
       "li",
       null,
@@ -210,15 +209,8 @@ class Story extends Component {
 class App extends Component {
   constructor(props) {
     super(props);
-    console.log(props, "props");
-    this.props = props;
-    this.state = this.state || {};
   }
 
-  setState(partialState) {
-    this.state = Object.assign({}, this.state, partialState);
-    updateInstance(this.__internalInstance);
-  }
   render() {
     return createElement(
       "div",
